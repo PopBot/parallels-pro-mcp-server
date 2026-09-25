@@ -50,6 +50,119 @@ A Model Context Protocol (MCP) server for Parallels Desktop on macOS. It enables
 
 ---
 
+## Tool Usage & Cookbook
+
+### 1. Instant Ephemeral Sandboxing
+Create an isolated linked clone in seconds, run tests headlessly, and destroy it when finished:
+
+```python
+# Spin up an instant linked clone sharing the base disk
+vm_clone(vm="Windows 11", name="Win11-Worker-1", linked=True)
+
+# Run headlessly without displaying a GUI window on the desktop
+vm_set_headless(vm="Win11-Worker-1", enabled=True)
+
+# Boot and wait until guest tools are ready
+vm_start(vm="Win11-Worker-1")
+vm_wait_ready(vm="Win11-Worker-1", timeout_s=120)
+
+# ... perform testing or build tasks ...
+
+# Graceful stop and permanent teardown
+vm_stop(vm="Win11-Worker-1")
+vm_delete(vm="Win11-Worker-1", confirm=True)
+```
+
+### 2. Bi-Directional File Transfer
+Stream files or entire directory trees between host and guest over stdin/stdout tar archives without needing network mounts or SMB credentials:
+
+```python
+# Push local build artifact into the guest Windows Temp folder
+vm_copy_to_guest(
+    vm="Windows 11",
+    host_path="./dist/myapp.exe",
+    guest_path=r"C:\Temp\myapp.exe"
+)
+
+# Pull test logs or crash dumps back onto the host
+vm_copy_from_guest(
+    vm="Windows 11",
+    guest_path=r"C:\Temp\test-results",
+    host_path="./reports/test-results"
+)
+```
+
+### 3. Dynamic Host Folder Sharing
+Mount local host directories directly into the VM at runtime:
+
+```python
+# Share a host repository with read-only protection
+vm_share_folder(
+    vm="Windows 11",
+    name="source_code",
+    host_path="~/projects/myapp",
+    mode="ro"
+)
+
+# Unmount the share when done
+vm_unshare_folder(vm="Windows 11", name="source_code")
+```
+
+### 4. GUI Interaction & Screen Analysis
+Interact with native GUI dialogs, installers, or Windows UAC prompts:
+
+```python
+# Capture what is currently on the VM screen
+vm_screenshot(vm="Windows 11")
+
+# Press Win+R to open the Run dialog
+vm_send_keys(vm="Windows 11", combination="win+r")
+
+# Type a command and press Enter
+vm_send_keys(vm="Windows 11", text="notepad.exe", keys=["enter"])
+
+# Dismiss a modal with Escape
+vm_send_keys(vm="Windows 11", keys=["esc"])
+```
+
+### 5. Network Simulation & Resilience Testing
+Simulate poor connections or complete offline states:
+
+```python
+# Throttle bandwidth and latency to emulate a 3G mobile link
+vm_set_network_condition(vm="Windows 11", profile="3g")
+
+# Simulate a network blackout (100% packet loss)
+vm_set_network_condition(vm="Windows 11", profile="100-percent-loss")
+
+# Restore normal network conditions
+vm_set_network_condition(vm="Windows 11", profile="off")
+```
+
+### 6. Snapshot Baselines
+Create rollback points before mutating system state:
+
+```python
+# List snapshots
+snapshot_list(vm="Windows 11")
+
+# Create a checkpoint
+snapshot_create(
+    vm="Windows 11",
+    name="clean-state",
+    description="Clean baseline before test execution",
+    confirm=True
+)
+
+# Revert back to the checkpoint
+snapshot_revert(vm="Windows 11", snapshot="clean-state", confirm=True)
+
+# Delete snapshot to reclaim host disk space
+snapshot_delete(vm="Windows 11", snapshot="clean-state", confirm=True)
+```
+
+---
+
 ## Prerequisites
 
 1. **macOS** with [Parallels Desktop](https://www.parallels.com/) Pro or Business Edition installed.
