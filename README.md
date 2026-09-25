@@ -20,7 +20,9 @@ A Model Context Protocol (MCP) server for Parallels Desktop on macOS. It enables
 - **Visual VM Inspection**: Capture real-time screenshots of the VM display buffer for multimodal AI analysis (`vm_screenshot`).
 - **Synthetic Input & Hotkeys**: Send keyboard events and hotkey combinations (`Ctrl+Alt+Del`, `Win+R`, `Enter`, `Esc`) to interact with GUI dialogs and prompts (`vm_send_keys`).
 - **Snapshot Lifecycle**: List, create, safely revert, and delete snapshots with mandatory confirmation flags (`confirm: true`).
-- **Pre-flight Diagnostic Doctor**: Built-in environment and license validator (`parallels-pro-mcp doctor` and `scripts/doctor.sh`).
+- **Guest Automation Optimization**: Configure Windows Defender real-time scanning exclusions and set PowerShell execution policy to Bypass to eliminate `EPERM` file-locking issues during guest automation and builds (`vm_optimize_windows`).
+- **Comprehensive Pre-Flight Diagnostics**: Inspect host CLI availability, Parallels Pro license tier, network adapters, and guest OS responsiveness (`vm_doctor`, `parallels-pro-mcp doctor`).
+- **In-Band Release Notes & Changelog**: Inspect version updates, breaking changes, and recent features directly over MCP via the `vm_changelog` tool, the `parallels://changelog` MCP resource, or the CLI (`parallels-pro-mcp changelog`).
 
 ---
 
@@ -52,6 +54,16 @@ A Model Context Protocol (MCP) server for Parallels Desktop on macOS. It enables
 | `snapshot_create`          | Create a snapshot with name and optional description                      | `confirm: true`       | State Mutating |
 | `snapshot_revert`          | Revert VM state to a specified snapshot                                   | `confirm: true`       | State Mutating |
 | `snapshot_delete`          | Permanently delete a snapshot to reclaim host disk space                  | `confirm: true`       | State Mutating |
+ 
+---
+
+## MCP Resources
+
+In addition to tools, the server exposes dynamic MCP resources for context-aware agents:
+
+| Resource URI | MIME Type | Description |
+|---|---|---|
+| `parallels://changelog` | `text/markdown` | Full release notes, version history, and recent updates from `CHANGELOG.md`. |
 
 ---
 
@@ -188,6 +200,15 @@ vm_optimize_windows(
 )
 ```
 
+### 9. Query Release Notes & Version Updates (`vm_changelog`)
+Retrieve the changelog programmatically to check for newly supported features or breaking changes:
+
+```python
+# Read the latest release notes
+latest_notes = vm_changelog(limit=1)
+print(latest_notes)
+```
+
 ---
 
 ## Prerequisites
@@ -197,16 +218,23 @@ vm_optimize_windows(
 2. **Parallels Tools** installed inside each target guest VM.
 3. **Python 3.10+** and [`uv`](https://docs.astral.sh/uv/) (recommended).
 
-### Verify Your Environment
+### Command-Line Interface & Environment Verification
 
-Before connecting an MCP client, run the pre-flight diagnostic:
+Before connecting an MCP client, you can use the built-in CLI to run diagnostics, read release notes, or start the server:
 
 ```bash
-# Using uv:
+# Run the pre-flight diagnostic doctor
 uv run parallels-pro-mcp doctor
+# (or via the standalone script: ./scripts/doctor.sh)
 
-# Or using the standalone script:
-./scripts/doctor.sh
+# Display recent release notes and version history
+uv run parallels-pro-mcp changelog
+
+# Check installed version
+uv run parallels-pro-mcp --version
+
+# Launch the MCP stdio server
+uv run parallels-pro-mcp
 ```
 
 ---
@@ -311,6 +339,7 @@ Or using `uvx`:
 |--------------------------|--------------------------------------------------------------------|-------------------------------------|
 | `PARALLELS_DEFAULT_VM`   | Fallback VM name or UUID used when a tool argument is omitted      | None                                |
 | `PARALLELS_ARTIFACT_DIR` | Host directory where captured screenshots and artifacts are stored | `~/.cache/parallels-pro-mcp-server` |
+| `PARALLELS_MCP_DEBUG`    | Enable verbose debug logging to stderr (`1` or `true`)             | `0` (disabled)                      |
 
 ---
 
