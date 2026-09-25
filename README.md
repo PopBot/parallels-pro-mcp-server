@@ -111,6 +111,43 @@ PARALLELS_DEFAULT_VM = "Windows 11"
 PARALLELS_ARTIFACT_DIR = "~/.cache/parallels-mcp"
 ```
 
+### Google Antigravity (Gemini CLI)
+
+Add the server to `~/.gemini/config/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "parallels-pro": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "/path/to/parallels-pro-mcp-server",
+        "parallels-pro-mcp"
+      ],
+      "env": {
+        "PARALLELS_DEFAULT_VM": "Windows 11",
+        "PARALLELS_ARTIFACT_DIR": "~/.cache/parallels-mcp"
+      }
+    }
+  }
+}
+```
+
+Or using `uvx`:
+
+```json
+{
+  "mcpServers": {
+    "parallels-pro": {
+      "command": "uvx",
+      "args": ["parallels-pro-mcp-server"]
+    }
+  }
+}
+```
+
 ---
 
 ## Environment Variables
