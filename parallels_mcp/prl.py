@@ -8,9 +8,13 @@ auditable before guest execution is added.
 from __future__ import annotations
 
 import asyncio
-import json
 from dataclasses import dataclass
+import json
+import logging
+import time
 from typing import Any
+
+logger = logging.getLogger("parallels_mcp.prl")
 
 
 class PrlError(RuntimeError):
@@ -81,6 +85,8 @@ async def run_argv(
         raise ValueError("timeout must be greater than zero")
 
     argv = (executable, *args)
+    t0 = time.monotonic()
+    logger.debug("Executing: %s", " ".join(argv))
     stdin_kwargs = {"stdin": asyncio.subprocess.PIPE} if stdin is not None else {}
     input_bytes = stdin.encode("utf-8") if isinstance(stdin, str) else stdin
     try:
@@ -107,6 +113,8 @@ async def run_argv(
             f"Parallels command timed out after {timeout:.1f}s: {' '.join(argv)}"
         ) from exc
 
+    elapsed = time.monotonic() - t0
+    logger.debug("Finished %s in %.3fs (returncode: %d)", argv[0], elapsed, process.returncode)
     return CommandResult(
         args=argv,
         returncode=process.returncode,
@@ -127,6 +135,8 @@ async def run_argv_binary(
         raise ValueError("timeout must be greater than zero")
 
     argv = (executable, *args)
+    t0 = time.monotonic()
+    logger.debug("Executing (binary): %s", " ".join(argv))
     stdin_kwargs = {"stdin": asyncio.subprocess.PIPE} if stdin is not None else {}
     input_bytes = stdin.encode("utf-8") if isinstance(stdin, str) else stdin
     try:
@@ -153,6 +163,8 @@ async def run_argv_binary(
             f"Parallels command timed out after {timeout:.1f}s: {' '.join(argv)}"
         ) from exc
 
+    elapsed = time.monotonic() - t0
+    logger.debug("Finished (binary) %s in %.3fs (returncode: %d)", argv[0], elapsed, process.returncode)
     return BinaryCommandResult(
         args=argv,
         returncode=process.returncode,

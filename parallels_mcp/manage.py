@@ -69,6 +69,19 @@ class NetworkConditionResult(BaseModel):
     message: str
 
 
+class WindowsOptimizationResult(BaseModel):
+    """Result of optimizing Windows guest VM for testing and automation."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    vm: str
+    uuid: str
+    defender_exclusions_added: list[str]
+    process_exclusions_added: list[str]
+    execution_policy: str
+    message: str
+
+
 class VmManagementService:
     """Handles VM cloning, deletion, and advanced hardware/profile configurations."""
 
@@ -203,4 +216,53 @@ class VmManagementService:
             enabled=enabled,
             profile=applied_profile,
             message=result.stdout.strip() or f"Set network conditioner to '{applied_profile}' for '{vm}'.",
+        )
+
+    async def optimize_windows(
+        self,
+        vm: str,
+        exclusion_paths: list[str] | None = None,
+        exclusion_processes: list[str] | None = None,
+        *,
+        timeout: float = 60.0,
+    ) -> WindowsOptimizationResult:
+        """Optimize Windows guest VM by setting Defender exclusions and execution policy."""
+        uuid = await self._vms.resolve(vm)
+        paths = exclusion_paths or [r"C:\Windows\Temp", r"$env:TEMP"]
+        processes = exclusion_processes or ["node.exe", "npm.cmd", "pnpm.cmd", "git.exe", "python.exe"]
+
+        path_args = ", ".join(f"'{p}'" for p in paths)
+        proc_args = ", ".join(f"'{p}'" for p in processes)
+
+        script = (
+            f"Add-MpPreference -ExclusionPath {path_args} -ErrorAction SilentlyContinue; "
+            f"Add-MpPreference -ExclusionProcess {proc_args} -ErrorAction SilentlyContinue; "
+            "Set-ExecutionPolicy -Scope LocalMachine -ExecutionPolicy Bypass -Force -ErrorAction SilentlyContinue; "
+            "(Get-ExecutionPolicy)"
+        )
+
+        result = await self._runner(
+            "exec",
+            uuid,
+            "powershell.exe",
+            "-NoProfile",
+            "-NonInteractive",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            script,
+            timeout=timeout,
+        )
+        if not result.ok:
+            raise PrlCommandError(result)
+
+        exec_policy = result.stdout.strip().splitlines()[-1] if result.stdout.strip() else "Bypass"
+
+        return WindowsOptimizationResult(
+            vm=vm,
+            uuid=uuid,
+            defender_exclusions_added=paths,
+            process_exclusions_added=processes,
+            execution_policy=exec_policy,
+            message=f"Windows VM '{vm}' optimized: Defender exclusions and ExecutionPolicy '{exec_policy}' applied.",
         )
