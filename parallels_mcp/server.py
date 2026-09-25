@@ -17,7 +17,9 @@ from .guest import GuestExecResult, GuestService
 from .input import InputService, KeyEventResult
 from .lifecycle import VmLifecycle, VmOperationResult
 from .screen import ScreenCapture, ScreenshotResult
+from .sharing import SharedFolderResult, SharingService
 from .snapshots import Snapshot, SnapshotOperationResult, SnapshotService
+from .transfer import FileTransferResult, FileTransferService
 from .vm import VmService, VmStatus, VmSummary
 
 
@@ -27,7 +29,7 @@ mcp = MCPServer(
     description="Operate and automate local Parallels Desktop virtual machines.",
     instructions=(
         "Read-only inspection tools are available alongside power lifecycle, guest "
-        "command execution, screen capture, keyboard simulation, and snapshot management. "
+        "command execution, file transfer, shared folders, screen capture, keyboard simulation, and snapshot management. "
         "Mutating operations require explicit confirmation where indicated."
     ),
 )
@@ -38,6 +40,8 @@ _settings = Settings.from_env()
 _screen = ScreenCapture(_vms)
 _input = InputService(_vms)
 _snapshots = SnapshotService(_vms)
+_sharing = SharingService(_vms)
+_transfer = FileTransferService(_vms, _guest)
 
 _READ_ONLY = ToolAnnotations(read_only_hint=True, idempotent_hint=True, open_world_hint=False)
 _POWER_CHANGE = ToolAnnotations(read_only_hint=False, destructive_hint=False, open_world_hint=False)
@@ -163,6 +167,89 @@ async def vm_send_keys(
     """
 
     return await _input.send_keys(vm, keys, delay_ms=delay_ms)
+
+
+@mcp.tool(title="Copy file or directory from host to Parallels guest", annotations=_GUEST_COMMAND)
+async def vm_copy_to_guest(
+    vm: str,
+    host_path: str,
+    guest_path: str,
+    user: str | None = None,
+    timeout_s: float = 300.0,
+) -> FileTransferResult:
+    """Stream a file or entire directory from the host into a guest path.
+
+    Works across Windows, Linux, and macOS guests using direct stream execution.
+    Creates parent directories in the guest if they do not exist.
+
+    Args:
+        vm: The VM name or UUID.
+        host_path: Path on the host filesystem (file or directory).
+        guest_path: Destination path inside the guest (e.g. "C:\\temp\\file.txt" or "/tmp/dir").
+        user: Optional guest user to run file extraction as.
+        timeout_s: Transfer timeout in seconds (default: 300s).
+    """
+
+    return await _transfer.copy_to_guest(vm, host_path, guest_path, user=user, timeout=timeout_s)
+
+
+@mcp.tool(title="Copy file or directory from Parallels guest to host", annotations=_GUEST_COMMAND)
+async def vm_copy_from_guest(
+    vm: str,
+    guest_path: str,
+    host_path: str,
+    user: str | None = None,
+    timeout_s: float = 300.0,
+) -> FileTransferResult:
+    """Stream a file or directory from a guest path back to the host filesystem.
+
+    Extracts test reports, build artifacts, logs, or files produced inside the VM.
+
+    Args:
+        vm: The VM name or UUID.
+        guest_path: Path to the file or directory inside the guest.
+        host_path: Destination path on the host where file/folder will be written.
+        user: Optional guest user to read files as.
+        timeout_s: Transfer timeout in seconds (default: 300s).
+    """
+
+    return await _transfer.copy_from_guest(vm, guest_path, host_path, user=user, timeout=timeout_s)
+
+
+@mcp.tool(title="Share a host directory with Parallels VM", annotations=_MUTATING_STATE)
+async def vm_share_folder(
+    vm: str,
+    name: str,
+    host_path: str,
+    mode: str = "rw",
+    description: str | None = None,
+) -> SharedFolderResult:
+    """Mount a host directory into the guest as a Parallels Shared Folder.
+
+    Args:
+        vm: The VM name or UUID.
+        name: Name of the share (e.g. "project_workspace").
+        host_path: Host directory to mount.
+        mode: Sharing mode: "ro" (read-only) or "rw" (read-write). Default is "rw".
+        description: Optional notes describing the shared folder.
+    """
+
+    return await _sharing.share_folder(vm, name, host_path, mode=mode, description=description)
+
+
+@mcp.tool(title="Unshare a host directory from Parallels VM", annotations=_MUTATING_STATE)
+async def vm_unshare_folder(
+    vm: str,
+    name: str,
+) -> SharedFolderResult:
+    """Unmount and remove a previously shared folder from the VM.
+
+    Args:
+        vm: The VM name or UUID.
+        name: Name of the share to delete.
+    """
+
+    return await _sharing.unshare_folder(vm, name)
 
 
 @mcp.tool(title="List Parallels snapshots", annotations=_READ_ONLY)

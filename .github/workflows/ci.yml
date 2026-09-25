@@ -32,8 +32,10 @@ jobs:
       - name: Install dependencies
         run: uv sync --python ${{ matrix.python-version }}
 
-      - name: Run unit test suite
-        run: uv run --python ${{ matrix.python-version }} python -m unittest discover -s tests
+      - name: Run unit test suite with coverage
+        run: |
+          uv run --python ${{ matrix.python-version }} coverage run --source=parallels_mcp -m unittest discover -s tests
+          uv run --python ${{ matrix.python-version }} coverage report -m
 
       - name: Verify compilation
         run: uv run --python ${{ matrix.python-version }} python -m compileall -q parallels_mcp main.py

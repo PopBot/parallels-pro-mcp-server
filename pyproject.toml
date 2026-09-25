@@ -45,3 +45,8 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["parallels_mcp"]
+
+[dependency-groups]
+dev = [
+    "coverage>=7.0",
+]

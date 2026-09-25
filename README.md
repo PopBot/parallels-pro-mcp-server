@@ -11,6 +11,8 @@ A Model Context Protocol (MCP) server for Parallels Desktop on macOS. It enables
 - **Full Lifecycle Management**: Start, gracefully stop (ACPI), and suspend virtual machines.
 - **Cross-Platform Guest Execution**: Execute commands inside Windows, Linux, or macOS guests with explicit argument vectors (`argv`), avoiding host shell injection risks.
 - **Readiness Probing**: Automatically detects guest OS and polls until Parallels Tools and the guest execution layer respond.
+- **Bi-Directional File Transfer**: Stream files and directories directly between host and guest over stdin/stdout tar archives without requiring network mounts or SMB credentials (`vm_copy_to_guest`, `vm_copy_from_guest`).
+- **Dynamic Host Folder Sharing**: Mount and unmount host directories into guest VMs at runtime with read-only or read-write permissions (`vm_share_folder`, `vm_unshare_folder`).
 - **Visual VM Inspection**: Capture real-time screenshots of the VM display buffer for multimodal AI analysis (`vm_screenshot`).
 - **Synthetic Input & Hotkeys**: Send keyboard events and hotkey combinations (`Ctrl+Alt+Del`, `Win+R`, `Enter`, `Esc`) to interact with GUI dialogs and prompts (`vm_send_keys`).
 - **Snapshot Lifecycle**: List, create, safely revert, and delete snapshots with mandatory confirmation flags (`confirm: true`).
@@ -29,6 +31,10 @@ A Model Context Protocol (MCP) server for Parallels Desktop on macOS. It enables
 | `vm_suspend` | Suspend VM and preserve guest memory | No | Destructive |
 | `vm_wait_ready` | Poll until the guest OS answers execution probes | No | Readiness |
 | `vm_exec` | Run an argv vector in the guest (supports custom `user`) | No (Privileged) | Guest Command |
+| `vm_copy_to_guest` | Stream files or directories from host into guest filesystem | No | File Transfer |
+| `vm_copy_from_guest` | Stream files or directories from guest onto host filesystem | No | File Transfer |
+| `vm_share_folder` | Mount a host directory into the guest (`rw` or `ro`) | No | State Mutating |
+| `vm_unshare_folder` | Remove a previously shared host directory | No | State Mutating |
 | `vm_screenshot` | Capture current VM screen to host PNG | No | Read-Only |
 | `vm_send_keys` | Send synthetic keystrokes or chords (e.g. `ctrl+alt+del`, `win+r`) | No | Guest Command |
 | `snapshot_list` | List all snapshots for a VM | No | Read-Only |
@@ -185,7 +191,7 @@ Or using `uvx`:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/parallels-pro-mcp-server.git
+git clone https://github.com/PopBot/parallels-pro-mcp-server.git
 cd parallels-pro-mcp-server
 
 # Install dependencies and sync environment
