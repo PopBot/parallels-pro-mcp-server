@@ -363,4 +363,6 @@ This project is licensed under the [MIT License](LICENSE).
 
 ---
 
+Not affiliated with Parallels International GmbH.
+
 Built with ♥️ as a collaboration between human and AI.
