@@ -67,18 +67,22 @@ uv run coverage report -m
 uv run parallels-pro-mcp doctor
 ```
 
-### 2. Bump the Package Version
-The version is dynamically loaded by `pyproject.toml` directly from `parallels_mcp/__init__.py`. You only ever edit one file:
+### 2. Update Changelog and Bump Version
+1. Open `CHANGELOG.md` and move all items from `## [Unreleased]` into a new version header:
+   ```markdown
+   ## [0.3.0] - 2026-09-25
+   ```
+   Keep an empty `## [Unreleased]` section at the top for future contributions.
 
-Open `parallels_mcp/__init__.py` and update `__version__`:
-```python
-__version__ = "0.2.0"
-```
+2. Open `parallels_mcp/__init__.py` and bump `__version__`:
+   ```python
+   __version__ = "0.3.0"
+   ```
 
 ### 3. Commit and Push to Main
 ```bash
-git add parallels_mcp/__init__.py
-git commit -m "chore: bump version to 0.2.0"
+git add CHANGELOG.md parallels_mcp/__init__.py
+git commit -m "chore: release 0.3.0"
 git push origin main
 ```
 

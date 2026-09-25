@@ -175,3 +175,15 @@ class VmManagementServiceTests(unittest.TestCase):
 
         with self.assertRaises(PrlCommandError):
             asyncio.run(service.set_headless("Windows 11", enabled=True))
+
+    def test_optimize_windows(self) -> None:
+        fake_runner = FakeRunner(returncode=0, stdout="Bypass\n")
+        service = VmManagementService(VmService(FakeJsonRunner()), fake_runner)
+
+        result = asyncio.run(service.optimize_windows("Windows 11"))
+        self.assertEqual(result.execution_policy, "Bypass")
+        self.assertIn("node.exe", result.process_exclusions_added)
+        self.assertTrue(len(result.defender_exclusions_added) >= 2)
+        self.assertEqual(fake_runner.calls[0][0], "exec")
+        self.assertEqual(fake_runner.calls[0][1], "11111111-1111-1111-1111-111111111111")
+        self.assertEqual(fake_runner.calls[0][2], "powershell.exe")

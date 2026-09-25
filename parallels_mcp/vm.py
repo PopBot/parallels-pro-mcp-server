@@ -146,3 +146,34 @@ class VmService:
         if not rows:
             raise VmError(f"Parallels returned no status for VM {uuid}")
         return _status_from_row(rows[0])
+
+    async def is_windows(self, name_or_uuid: str) -> bool:
+        """Return True if the guest OS is Windows, False for Linux/other."""
+        lower_name = name_or_uuid.lower()
+        if any(term in lower_name for term in ("ubuntu", "linux", "debian", "centos", "rhel", "fedora", "nixos", "kali")):
+            return False
+        if any(term in lower_name for term in ("win", "windows")):
+            return True
+        try:
+            vms = await self.list_vms()
+            norm = _strip_uuid(name_or_uuid)
+            for v in vms:
+                if v.uuid == norm or v.name == name_or_uuid:
+                    v_name = v.name.lower()
+                    if any(term in v_name for term in ("ubuntu", "linux", "debian", "centos", "rhel", "fedora", "nixos", "kali")):
+                        return False
+                    if any(term in v_name for term in ("win", "windows")):
+                        return True
+        except Exception:
+            pass
+        try:
+            st = await self.status(name_or_uuid)
+            if st.os:
+                os_lower = st.os.lower()
+                if any(term in os_lower for term in ("ubuntu", "linux", "debian", "centos", "rhel", "fedora")):
+                    return False
+                if "win" in os_lower:
+                    return True
+        except Exception:
+            pass
+        return True

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime, timezone
+import logging
+import os
 from pathlib import Path
 import sys
 
@@ -12,11 +14,18 @@ from mcp_types import ToolAnnotations
 
 from . import __version__
 from .config import Settings
-from .doctor import run_doctor
+from .doctor import DoctorReport, run_doctor, run_doctor_report
 from .guest import GuestExecResult, GuestService
 from .input import InputService, KeyEventResult
 from .lifecycle import VmLifecycle, VmOperationResult
-from .manage import CloneResult, DeleteResult, HeadlessResult, NetworkConditionResult, VmManagementService
+from .manage import (
+    CloneResult,
+    DeleteResult,
+    HeadlessResult,
+    NetworkConditionResult,
+    VmManagementService,
+    WindowsOptimizationResult,
+)
 from .screen import ScreenCapture, ScreenshotResult
 from .sharing import SharedFolderResult, SharingService
 from .snapshots import Snapshot, SnapshotOperationResult, SnapshotService
@@ -368,6 +377,73 @@ async def vm_set_network_condition(
     return await _manage.set_network_condition(vm, profile=profile)
 
 
+@mcp.tool(title="Run Parallels pre-flight doctor diagnostics", annotations=_READ_ONLY)
+async def vm_doctor(vm: str | None = None) -> DoctorReport:
+    """Run diagnostic pre-flight checks on host macOS and Parallels setup, with optional guest inspection.
+
+    Args:
+        vm: Optional VM name or UUID. If specified, checks guest OS, runtimes, and environment.
+    """
+    return await run_doctor_report(guest=_guest, vm=vm)
+
+
+@mcp.tool(title="Optimize Windows VM for automation", annotations=_MUTATING_STATE)
+async def vm_optimize_windows(
+    vm: str,
+    exclusion_paths: list[str] | None = None,
+    exclusion_processes: list[str] | None = None,
+) -> WindowsOptimizationResult:
+    """Optimize a Windows guest VM for automated tasks, testing, and script execution.
+
+    Configures Windows Defender real-time scanning exclusions (preventing EPERM/EBUSY file locks)
+    and sets PowerShell ExecutionPolicy to Bypass.
+
+    Args:
+        vm: The Windows VM name or UUID.
+        exclusion_paths: Optional directory paths to exclude from Defender scanning.
+        exclusion_processes: Optional process binary names to exclude (defaults to node.exe, npm.cmd, pnpm.cmd, git.exe, python.exe).
+    """
+    return await _manage.optimize_windows(
+        vm,
+        exclusion_paths=exclusion_paths,
+        exclusion_processes=exclusion_processes,
+    )
+
+
+@mcp.tool(title="Get Parallels MCP server changelog and release notes", annotations=_READ_ONLY)
+async def vm_changelog(latest_only: bool = False) -> str:
+    """Read the release notes, new features, and bug fixes for parallels-pro-mcp-server.
+
+    Args:
+        latest_only: If true, returns only the latest release section. If false, returns the complete changelog.
+    """
+    changelog_path = Path(__file__).resolve().parent.parent / "CHANGELOG.md"
+    if not changelog_path.is_file():
+        return "# Changelog\n\nNo CHANGELOG.md found."
+    content = changelog_path.read_text(encoding="utf-8")
+    if not latest_only:
+        return content
+    parts = content.split("\n## ")
+    if len(parts) >= 2:
+        return "## " + parts[1].strip()
+    return content
+
+
+@mcp.resource(
+    "parallels://changelog",
+    name="changelog",
+    title="Parallels MCP Server Changelog & Release Notes",
+    description="The complete changelog, recent updates, bug fixes, and release history for parallels-pro-mcp-server.",
+    mime_type="text/markdown",
+)
+def get_changelog() -> str:
+    """Resource returning the complete changelog markdown."""
+    changelog_path = Path(__file__).resolve().parent.parent / "CHANGELOG.md"
+    if changelog_path.is_file():
+        return changelog_path.read_text(encoding="utf-8")
+    return "# Changelog\n\nNo CHANGELOG.md found."
+
+
 def main() -> None:
     """Run the server over MCP stdio or execute CLI subcommands."""
 
@@ -375,9 +451,28 @@ def main() -> None:
         print(f"parallels-pro-mcp {__version__}")
         sys.exit(0)
 
+    if len(sys.argv) > 1 and sys.argv[1].lower() in {"changelog", "notes", "--changelog"}:
+        changelog_path = Path(__file__).resolve().parent.parent / "CHANGELOG.md"
+        if changelog_path.is_file():
+            print(changelog_path.read_text(encoding="utf-8"))
+        else:
+            print("No CHANGELOG.md found.")
+        sys.exit(0)
+
     if len(sys.argv) > 1 and sys.argv[1].lower() in {"doctor", "check", "--doctor"}:
         code = asyncio.run(run_doctor())
         sys.exit(code)
+
+    debug_mode = os.getenv("PARALLELS_MCP_DEBUG", "1").lower() in {"1", "true", "yes", "debug"}
+    if debug_mode:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+            stream=sys.stderr,
+        )
+        logger = logging.getLogger("parallels_mcp")
+        logger.setLevel(logging.DEBUG)
+        logger.debug("Starting parallels-pro-mcp with DEBUG logging enabled")
 
     mcp.run()
 

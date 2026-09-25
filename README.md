@@ -43,6 +43,9 @@ A Model Context Protocol (MCP) server for Parallels Desktop on macOS. It enables
 | `vm_set_network_condition` | Simulate degraded network profiles (3g, wifi, loss, off) | No | State Mutating |
 | `vm_screenshot` | Capture current VM screen to host PNG | No | Read-Only |
 | `vm_send_keys` | Send synthetic keystrokes or chords (e.g. `ctrl+alt+del`, `win+r`) | No | Guest Command |
+| `vm_optimize_windows` | Add Windows Defender exclusions and set PowerShell ExecutionPolicy Bypass | No | State Mutating |
+| `vm_doctor` | Pre-flight environment diagnostics for macOS host and guest OS | No | Read-Only |
+| `vm_changelog` | Read release notes and updates over MCP | No | Read-Only |
 | `snapshot_list` | List all snapshots for a VM | No | Read-Only |
 | `snapshot_create` | Create a snapshot with name and optional description | `confirm: true` | State Mutating |
 | `snapshot_revert` | Revert VM state to a specified snapshot | `confirm: true` | State Mutating |
@@ -159,6 +162,28 @@ snapshot_revert(vm="Windows 11", snapshot="clean-state", confirm=True)
 
 # Delete snapshot to reclaim host disk space
 snapshot_delete(vm="Windows 11", snapshot="clean-state", confirm=True)
+```
+
+### 7. Environment Pre-Flight & Guest Health (`vm_doctor`)
+Run host and guest diagnostics to verify licensing, CLI availability, and runtime readiness:
+
+```python
+# Run pre-flight health check on host and Windows guest
+report = vm_doctor(vm="Windows 11")
+for check in report.host_checks + report.guest_checks:
+    print(f"[{check.status}] {check.name}: {check.detail}")
+```
+
+### 8. Windows Guest Automation Optimization (`vm_optimize_windows`)
+Configure Windows Defender real-time scanning exclusions and set PowerShell ExecutionPolicy to Bypass to eliminate `EPERM` file-locking during builds:
+
+```python
+# Optimize Windows guest for fast builds and testing
+vm_optimize_windows(
+    vm="Windows 11",
+    exclusion_paths=[r"C:\Temp", r"C:\workspace"],
+    exclusion_processes=["node.exe", "npm.cmd", "pnpm.cmd", "git.exe"]
+)
 ```
 
 ---

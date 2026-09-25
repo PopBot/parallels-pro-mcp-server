@@ -27,12 +27,23 @@ class ServerRegistrationTests(unittest.TestCase):
                 "vm_delete",
                 "vm_set_headless",
                 "vm_set_network_condition",
+                "vm_optimize_windows",
+                "vm_doctor",
+                "vm_changelog",
                 "snapshot_list",
                 "snapshot_create",
                 "snapshot_revert",
                 "snapshot_delete",
             },
         )
+
+    def test_registers_changelog_resource(self) -> None:
+        from parallels_mcp.server import get_changelog, vm_changelog
+
+        content = get_changelog()
+        self.assertIn("# Changelog", content)
+        tool_content = asyncio.run(vm_changelog(latest_only=False))
+        self.assertIn("# Changelog", tool_content)
 
     def test_confirmation_guards(self) -> None:
         from parallels_mcp.server import snapshot_create, snapshot_delete, snapshot_revert, vm_delete
