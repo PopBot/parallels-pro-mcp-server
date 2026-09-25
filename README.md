@@ -13,6 +13,8 @@ A Model Context Protocol (MCP) server for Parallels Desktop on macOS. It enables
 - **Readiness Probing**: Automatically detects guest OS and polls until Parallels Tools and the guest execution layer respond.
 - **Bi-Directional File Transfer**: Stream files and directories directly between host and guest over stdin/stdout tar archives without requiring network mounts or SMB credentials (`vm_copy_to_guest`, `vm_copy_from_guest`).
 - **Dynamic Host Folder Sharing**: Mount and unmount host directories into guest VMs at runtime with read-only or read-write permissions (`vm_share_folder`, `vm_unshare_folder`).
+- **Instant Sandboxing & Ephemeral Clones**: Spin up fast linked clones in seconds for disposable agent test environments, and permanently delete sandboxes with confirmation (`vm_clone`, `vm_delete`).
+- **Headless Execution & Network Simulation**: Run VMs headlessly in the background, or simulate network degradation (edge, 3g, wifi, 100% packet loss, offline) for resilience testing (`vm_set_headless`, `vm_set_network_condition`).
 - **Visual VM Inspection**: Capture real-time screenshots of the VM display buffer for multimodal AI analysis (`vm_screenshot`).
 - **Synthetic Input & Hotkeys**: Send keyboard events and hotkey combinations (`Ctrl+Alt+Del`, `Win+R`, `Enter`, `Esc`) to interact with GUI dialogs and prompts (`vm_send_keys`).
 - **Snapshot Lifecycle**: List, create, safely revert, and delete snapshots with mandatory confirmation flags (`confirm: true`).
@@ -35,6 +37,10 @@ A Model Context Protocol (MCP) server for Parallels Desktop on macOS. It enables
 | `vm_copy_from_guest` | Stream files or directories from guest onto host filesystem | No | File Transfer |
 | `vm_share_folder` | Mount a host directory into the guest (`rw` or `ro`) | No | State Mutating |
 | `vm_unshare_folder` | Remove a previously shared host directory | No | State Mutating |
+| `vm_clone` | Clone a VM (fast linked clone or deep copy) | No | State Mutating |
+| `vm_delete` | Permanently delete a VM and its disks | `confirm: true` | Destructive |
+| `vm_set_headless` | Configure headless vs GUI window startup mode | No | State Mutating |
+| `vm_set_network_condition` | Simulate degraded network profiles (3g, wifi, loss, off) | No | State Mutating |
 | `vm_screenshot` | Capture current VM screen to host PNG | No | Read-Only |
 | `vm_send_keys` | Send synthetic keystrokes or chords (e.g. `ctrl+alt+del`, `win+r`) | No | Guest Command |
 | `snapshot_list` | List all snapshots for a VM | No | Read-Only |
@@ -172,10 +178,12 @@ Or using `uvx`:
 
 1. **Discover**: Call `vm_list` to see available VMs and states.
 2. **Inspect**: Call `vm_status(vm="...")` to verify guest tools and power status.
-3. **Power Up**: If stopped, call `vm_start` followed by `vm_wait_ready` to ensure guest tools are responsive.
-4. **Inspect Desktop**: Call `vm_screenshot` to visually check if dialogs or login prompts are blocking the session.
-5. **Snapshot Baseline**: Call `snapshot_create(vm="...", name="clean-baseline", confirm=true)` before performing major tasks.
-6. **Execute**: Use `vm_exec` with explicit argument arrays (e.g. `["cmd", "/c", "dir"]` or `["ls", "-la"]`).
+3. **Optional Sandbox**: For risky or destructive test sessions, call `vm_clone(vm="...", name="agent-sandbox", linked=true)` to create a fast, isolated linked clone.
+4. **Power Up**: If stopped, call `vm_start` followed by `vm_wait_ready` to ensure guest tools are responsive.
+5. **Inspect Desktop**: Call `vm_screenshot` to visually check if dialogs or login prompts are blocking the session.
+6. **Snapshot Baseline**: Call `snapshot_create(vm="...", name="clean-baseline", confirm=true)` before performing major tasks.
+7. **Transfer & Execute**: Use `vm_copy_to_guest` to stage scripts, `vm_exec` with explicit argv arrays to run commands, and `vm_copy_from_guest` to retrieve build artifacts.
+8. **Teardown**: Revert via `snapshot_revert` or destroy ephemeral sandboxes via `vm_delete(vm="agent-sandbox", confirm=true)`.
 
 ---
 
@@ -200,8 +208,9 @@ uv sync
 # Run diagnostic doctor
 uv run parallels-pro-mcp doctor
 
-# Run test suite
-uv run python -m unittest discover -s tests
+# Run test suite with test coverage reporting
+uv run coverage run --source=parallels_mcp -m unittest discover -s tests
+uv run coverage report -m
 ```
 
 ---

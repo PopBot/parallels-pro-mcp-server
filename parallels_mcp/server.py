@@ -16,6 +16,7 @@ from .doctor import run_doctor
 from .guest import GuestExecResult, GuestService
 from .input import InputService, KeyEventResult
 from .lifecycle import VmLifecycle, VmOperationResult
+from .manage import CloneResult, DeleteResult, HeadlessResult, NetworkConditionResult, VmManagementService
 from .screen import ScreenCapture, ScreenshotResult
 from .sharing import SharedFolderResult, SharingService
 from .snapshots import Snapshot, SnapshotOperationResult, SnapshotService
@@ -42,6 +43,7 @@ _input = InputService(_vms)
 _snapshots = SnapshotService(_vms)
 _sharing = SharingService(_vms)
 _transfer = FileTransferService(_vms, _guest)
+_manage = VmManagementService(_vms)
 
 _READ_ONLY = ToolAnnotations(read_only_hint=True, idempotent_hint=True, open_world_hint=False)
 _POWER_CHANGE = ToolAnnotations(read_only_hint=False, destructive_hint=False, open_world_hint=False)
@@ -301,6 +303,69 @@ async def snapshot_delete(
     if not confirm:
         raise ValueError("snapshot_delete permanently deletes snapshot storage; call it with confirm=true")
     return await _snapshots.delete(vm, snapshot, delete_children=delete_children)
+
+
+@mcp.tool(title="Clone Parallels VM", annotations=_MUTATING_STATE)
+async def vm_clone(
+    vm: str,
+    name: str,
+    linked: bool = True,
+    dst: str | None = None,
+) -> CloneResult:
+    """Clone an existing VM to quickly spin up sandboxes or disposable test environments.
+
+    Args:
+        vm: The source VM name or UUID to clone.
+        name: Name for the newly created clone.
+        linked: If true (default), creates a fast linked clone sharing the base disk. If false, creates a full independent deep clone.
+        dst: Optional custom destination path for the cloned VM.
+    """
+    return await _manage.clone(vm, name, linked=linked, dst=dst)
+
+
+@mcp.tool(title="Delete Parallels VM", annotations=_MUTATING_STATE)
+async def vm_delete(
+    vm: str,
+    confirm: bool = False,
+) -> DeleteResult:
+    """Permanently delete a VM and all its associated disk images from host storage.
+
+    Args:
+        vm: The VM name or UUID to delete.
+        confirm: Must be explicitly set to true to prevent accidental VM deletion.
+    """
+    if not confirm:
+        raise ValueError("vm_delete permanently destroys the VM and its disks; call it with confirm=true")
+    return await _manage.delete(vm, confirm=confirm)
+
+
+@mcp.tool(title="Set Parallels VM headless mode", annotations=_MUTATING_STATE)
+async def vm_set_headless(
+    vm: str,
+    enabled: bool = True,
+) -> HeadlessResult:
+    """Configure whether the VM runs headlessly in the background or displays a GUI window.
+
+    Args:
+        vm: The VM name or UUID.
+        enabled: If true (default), sets startup-view to headless. If false, sets startup-view to window.
+    """
+    return await _manage.set_headless(vm, enabled=enabled)
+
+
+@mcp.tool(title="Set Parallels network condition", annotations=_MUTATING_STATE)
+async def vm_set_network_condition(
+    vm: str,
+    profile: str = "off",
+) -> NetworkConditionResult:
+    """Simulate degraded network conditions or offline state for the VM.
+
+    Args:
+        vm: The VM name or UUID.
+        profile: Network profile name ('off', 'edge', 'dsl', '3g', '100-percent-loss', 'very-bad-net', 'wifi').
+                 Use 'off' to disable simulation and restore normal network conditions.
+    """
+    return await _manage.set_network_condition(vm, profile=profile)
 
 
 def main() -> None:
