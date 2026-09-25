@@ -1,0 +1,20 @@
+startCommand:
+  type: stdio
+  configSchema:
+    type: object
+    properties:
+      defaultVm:
+        type: string
+        description: "Default Parallels VM name or UUID (e.g. 'Windows 11')"
+      artifactDir:
+        type: string
+        description: "Host directory for screenshots and artifacts"
+  commandFunction: |-
+    (config) => ({
+      command: 'uvx',
+      args: ['parallels-pro-mcp-server'],
+      env: {
+        ...(config.defaultVm ? { PARALLELS_DEFAULT_VM: config.defaultVm } : {}),
+        ...(config.artifactDir ? { PARALLELS_ARTIFACT_DIR: config.artifactDir } : {})
+      }
+    })
