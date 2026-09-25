@@ -56,6 +56,7 @@ async def run_argv(
     executable: str,
     *args: str,
     timeout: float = 30.0,
+    stdin: str | bytes | None = None,
 ) -> CommandResult:
     """Run one executable with explicit argv and capture both output streams."""
 
@@ -63,11 +64,14 @@ async def run_argv(
         raise ValueError("timeout must be greater than zero")
 
     argv = (executable, *args)
+    stdin_kwargs = {"stdin": asyncio.subprocess.PIPE} if stdin is not None else {}
+    input_bytes = stdin.encode("utf-8") if isinstance(stdin, str) else stdin
     try:
         process = await asyncio.create_subprocess_exec(
             *argv,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
+            **stdin_kwargs,
         )
     except FileNotFoundError as exc:
         raise PrlError(f"Parallels executable not found: {executable!r}") from exc
@@ -75,8 +79,9 @@ async def run_argv(
         raise PrlError(f"Could not start Parallels executable {executable!r}: {exc}") from exc
 
     try:
+        communicate_kwargs = {"input": input_bytes} if input_bytes is not None else {}
         stdout_bytes, stderr_bytes = await asyncio.wait_for(
-            process.communicate(), timeout=timeout
+            process.communicate(**communicate_kwargs), timeout=timeout
         )
     except asyncio.TimeoutError as exc:
         process.kill()
@@ -97,10 +102,11 @@ async def run_prlctl(
     *args: str,
     timeout: float = 30.0,
     executable: str = "prlctl",
+    stdin: str | bytes | None = None,
 ) -> CommandResult:
     """Run ``prlctl`` with an explicit argv."""
 
-    return await run_argv(executable, *args, timeout=timeout)
+    return await run_argv(executable, *args, timeout=timeout, stdin=stdin)
 
 
 async def run_prlctl_json(*args: str, timeout: float = 30.0) -> Any:

@@ -107,3 +107,30 @@ class SnapshotService:
             snapshot_id=snapshot_id,
             message=result.stdout.strip() or "snapshot reverted",
         )
+
+    async def delete(
+        self,
+        vm: str,
+        snapshot: str,
+        delete_children: bool = False,
+    ) -> SnapshotOperationResult:
+        uuid = await self._vms.resolve(vm)
+        snapshots = await self.list(vm)
+        requested_id = _clean_id(snapshot)
+        matches = [item for item in snapshots if item.id == requested_id or item.name == snapshot]
+        if len(matches) != 1:
+            raise RuntimeError(f"Snapshot {snapshot!r} was not uniquely found for VM {vm!r}")
+        snapshot_id = matches[0].id
+        args = ["snapshot-delete", uuid, "--id", snapshot_id]
+        if delete_children:
+            args.append("-c")
+        result = await self._runner(*args, timeout=600.0)
+        if not result.ok:
+            raise PrlCommandError(result)
+        return SnapshotOperationResult(
+            vm=vm,
+            uuid=uuid,
+            action="snapshot_delete",
+            snapshot_id=snapshot_id,
+            message=result.stdout.strip() or "snapshot deleted",
+        )

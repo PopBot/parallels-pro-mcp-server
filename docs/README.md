@@ -120,6 +120,14 @@ Captures the current visual display buffer of the virtual machine to a host PNG 
   - `output_path` (optional): Host file path to write PNG. If omitted, writes to `PARALLELS_ARTIFACT_DIR`.
 - **Returns**: Object with `vm`, `uuid`, `path`, and file `bytes`.
 
+### `vm_send_keys`
+Sends synthetic keystrokes, typing sequences, or hotkey combinations to a virtual machine.
+- **Parameters**:
+  - `vm`: Name or UUID.
+  - `keys`: String key name (`"enter"`, `"esc"`), key chord (`"ctrl+alt+del"`, `"win+r"`), character string (`"notepad.exe"`), or array of keys.
+  - `delay_ms` (integer, default 50): Delay in milliseconds between key events.
+- **Returns**: Object with `vm`, `uuid`, `events_sent`, and `message`.
+
 ### `snapshot_list`
 Lists all existing snapshots for a virtual machine.
 - **Parameters**: `vm` (string: name or UUID).
@@ -138,6 +146,14 @@ Reverts the virtual machine state to a designated snapshot.
 - **Parameters**:
   - `vm`: Name or UUID.
   - `snapshot`: Snapshot name or UUID.
+  - `confirm`: Must be `true`.
+
+### `snapshot_delete`
+Permanently deletes a snapshot to reclaim host disk space.
+- **Parameters**:
+  - `vm`: Name or UUID.
+  - `snapshot`: Snapshot name or UUID to delete.
+  - `delete_children` (optional boolean, default false): If true, also delete child snapshots descended from this one.
   - `confirm`: Must be `true`.
 
 ---

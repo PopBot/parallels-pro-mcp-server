@@ -10,8 +10,10 @@ class FakeProcess:
         self.returncode = returncode
         self._stdout = stdout
         self._stderr = stderr
+        self.received_input: bytes | None = None
 
-    async def communicate(self) -> tuple[bytes, bytes]:
+    async def communicate(self, input: bytes | None = None) -> tuple[bytes, bytes]:
+        self.received_input = input
         return self._stdout, self._stderr
 
     def kill(self) -> None:

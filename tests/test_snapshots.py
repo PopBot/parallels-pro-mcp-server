@@ -48,3 +48,18 @@ class SnapshotServiceTests(unittest.TestCase):
                 "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
             ),
         )
+
+    def test_delete_resolves_snapshot_name_to_id(self) -> None:
+        runner = FakeRunner()
+        service = SnapshotService(VmService(FakeJsonRunner()), json_runner=FakeJsonRunner(), runner=runner)
+        result = asyncio.run(service.delete("Windows 11", "clean-baseline"))
+        self.assertEqual(result.snapshot_id, "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        self.assertEqual(
+            runner.calls[-1],
+            (
+                "snapshot-delete",
+                "11111111-1111-1111-1111-111111111111",
+                "--id",
+                "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            ),
+        )

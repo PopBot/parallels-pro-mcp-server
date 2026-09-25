@@ -12,7 +12,8 @@ A Model Context Protocol (MCP) server for Parallels Desktop on macOS. It enables
 - **Cross-Platform Guest Execution**: Execute commands inside Windows, Linux, or macOS guests with explicit argument vectors (`argv`), avoiding host shell injection risks.
 - **Readiness Probing**: Automatically detects guest OS and polls until Parallels Tools and the guest execution layer respond.
 - **Visual VM Inspection**: Capture real-time screenshots of the VM display buffer for multimodal AI analysis (`vm_screenshot`).
-- **Snapshot Safety**: List, create, and safely revert snapshots with mandatory confirmation flags (`confirm: true`).
+- **Synthetic Input & Hotkeys**: Send keyboard events and hotkey combinations (`Ctrl+Alt+Del`, `Win+R`, `Enter`, `Esc`) to interact with GUI dialogs and prompts (`vm_send_keys`).
+- **Snapshot Lifecycle**: List, create, safely revert, and delete snapshots with mandatory confirmation flags (`confirm: true`).
 - **Pre-flight Diagnostic Doctor**: Built-in environment and license validator (`parallels-pro-mcp doctor` and `scripts/doctor.sh`).
 
 ---
@@ -29,9 +30,11 @@ A Model Context Protocol (MCP) server for Parallels Desktop on macOS. It enables
 | `vm_wait_ready` | Poll until the guest OS answers execution probes | No | Readiness |
 | `vm_exec` | Run an argv vector in the guest (supports custom `user`) | No (Privileged) | Guest Command |
 | `vm_screenshot` | Capture current VM screen to host PNG | No | Read-Only |
+| `vm_send_keys` | Send synthetic keystrokes or chords (e.g. `ctrl+alt+del`, `win+r`) | No | Guest Command |
 | `snapshot_list` | List all snapshots for a VM | No | Read-Only |
 | `snapshot_create` | Create a snapshot with name and optional description | `confirm: true` | State Mutating |
 | `snapshot_revert` | Revert VM state to a specified snapshot | `confirm: true` | State Mutating |
+| `snapshot_delete` | Permanently delete a snapshot to reclaim host disk space | `confirm: true` | State Mutating |
 
 ---
 

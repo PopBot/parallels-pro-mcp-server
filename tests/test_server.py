@@ -18,8 +18,10 @@ class ServerRegistrationTests(unittest.TestCase):
                 "vm_wait_ready",
                 "vm_exec",
                 "vm_screenshot",
+                "vm_send_keys",
                 "snapshot_list",
                 "snapshot_create",
                 "snapshot_revert",
+                "snapshot_delete",
             },
         )

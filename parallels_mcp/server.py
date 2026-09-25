@@ -14,6 +14,7 @@ from . import __version__
 from .config import Settings
 from .doctor import run_doctor
 from .guest import GuestExecResult, GuestService
+from .input import InputService, KeyEventResult
 from .lifecycle import VmLifecycle, VmOperationResult
 from .screen import ScreenCapture, ScreenshotResult
 from .snapshots import Snapshot, SnapshotOperationResult, SnapshotService
@@ -26,8 +27,8 @@ mcp = MCPServer(
     description="Operate and automate local Parallels Desktop virtual machines.",
     instructions=(
         "Read-only inspection tools are available alongside power lifecycle, guest "
-        "command execution, screen capture, and snapshot management. Mutating operations "
-        "require explicit confirmation where indicated."
+        "command execution, screen capture, keyboard simulation, and snapshot management. "
+        "Mutating operations require explicit confirmation where indicated."
     ),
 )
 _vms = VmService()
@@ -35,6 +36,7 @@ _guest = GuestService(_vms)
 _lifecycle = VmLifecycle(_vms, _guest)
 _settings = Settings.from_env()
 _screen = ScreenCapture(_vms)
+_input = InputService(_vms)
 _snapshots = SnapshotService(_vms)
 
 _READ_ONLY = ToolAnnotations(read_only_hint=True, idempotent_hint=True, open_world_hint=False)
@@ -140,6 +142,29 @@ async def vm_screenshot(
     return await _screen.capture(vm, dest)
 
 
+@mcp.tool(title="Send keystrokes to Parallels VM", annotations=_GUEST_COMMAND)
+async def vm_send_keys(
+    vm: str,
+    keys: list[str] | str,
+    delay_ms: int = 50,
+) -> KeyEventResult:
+    """Send synthetic keystrokes or hotkey combinations to a running VM.
+
+    Supports:
+    - Single keys: "enter", "esc", "tab", "space", "backspace", "delete", "f1"-"f12", arrows, etc.
+    - Key chords: "ctrl+alt+del", "win+r", "alt+f4", "ctrl+c", "ctrl+shift+esc", etc.
+    - Strings to type: "notepad.exe" or "echo Hello"
+    - Multiple key entries in sequence: ["win+r", "notepad.exe", "enter"]
+
+    Args:
+        vm: The VM name or UUID.
+        keys: Key name, chord string (e.g. "ctrl+alt+del"), or list of keys to send in order.
+        delay_ms: Delay in milliseconds between key events (default: 50ms).
+    """
+
+    return await _input.send_keys(vm, keys, delay_ms=delay_ms)
+
+
 @mcp.tool(title="List Parallels snapshots", annotations=_READ_ONLY)
 async def snapshot_list(vm: str) -> list[Snapshot]:
     """List snapshots for a VM without changing state."""
@@ -168,6 +193,27 @@ async def snapshot_revert(vm: str, snapshot: str, confirm: bool = False) -> Snap
     if not confirm:
         raise ValueError("snapshot_revert discards guest changes; call it with confirm=true")
     return await _snapshots.revert(vm, snapshot)
+
+
+@mcp.tool(title="Delete Parallels snapshot", annotations=_MUTATING_STATE)
+async def snapshot_delete(
+    vm: str,
+    snapshot: str,
+    delete_children: bool = False,
+    confirm: bool = False,
+) -> SnapshotOperationResult:
+    """Permanently delete a snapshot to free host disk space.
+
+    Args:
+        vm: The VM name or UUID.
+        snapshot: Snapshot name or UUID to delete.
+        delete_children: If true, also delete child snapshots descended from this one.
+        confirm: Must be explicitly set to true.
+    """
+
+    if not confirm:
+        raise ValueError("snapshot_delete permanently deletes snapshot storage; call it with confirm=true")
+    return await _snapshots.delete(vm, snapshot, delete_children=delete_children)
 
 
 def main() -> None:
