@@ -371,6 +371,10 @@ async def vm_set_network_condition(
 def main() -> None:
     """Run the server over MCP stdio or execute CLI subcommands."""
 
+    if len(sys.argv) > 1 and sys.argv[1].lower() in {"--version", "-v", "version"}:
+        print(f"parallels-pro-mcp {__version__}")
+        sys.exit(0)
+
     if len(sys.argv) > 1 and sys.argv[1].lower() in {"doctor", "check", "--doctor"}:
         code = asyncio.run(run_doctor())
         sys.exit(code)

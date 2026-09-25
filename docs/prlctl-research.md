@@ -14,15 +14,15 @@ Captured from the live install on this machine, not from docs.
 Structured output exists for every important **read** path, so the server needs
 almost no text scraping.
 
-| Command | `-j` | Shape |
-|---|---|---|
-| `prlctl list` | yes | array of objects |
-| `prlctl list -i` (full config) | **yes** | array of deeply nested objects |
-| `prlctl snapshot-list` | yes | **object keyed by `{uuid}`**, not an array |
-| `prlsrvctl info` | yes | object |
-| `prlsrvctl net list` / `usb list` / `user list` | yes | array |
-| `prlctl status` | no | one line of text |
-| everything else (writes) | no | human text, exit code is the real signal |
+| Command                                         | `-j`    | Shape                                      |
+|-------------------------------------------------|---------|--------------------------------------------|
+| `prlctl list`                                   | yes     | array of objects                           |
+| `prlctl list -i` (full config)                  | **yes** | array of deeply nested objects             |
+| `prlctl snapshot-list`                          | yes     | **object keyed by `{uuid}`**, not an array |
+| `prlsrvctl info`                                | yes     | object                                     |
+| `prlsrvctl net list` / `usb list` / `user list` | yes     | array                                      |
+| `prlctl status`                                 | no      | one line of text                           |
+| everything else (writes)                        | no      | human text, exit code is the real signal   |
 
 Quirks to handle:
 
@@ -36,24 +36,24 @@ Quirks to handle:
 
 ### prlctl — VM management
 
-| Action | Notes |
-|---|---|
-| `list` | `-a` all, `-i` info, `-j` json, `-o` fields, `-t` templates, `-S` stopped |
-| `status` | single VM state |
-| `create` | `--ostype`, `--distribution`, `--ostemplate`, `--dst`, `--no-hdd` |
-| `clone` | `--name`, `--linked`, `--template`, `--dst`, `--regenerate-src-uuid` |
-| `delete` | **destructive, irreversible** |
-| `register` / `unregister` | add/remove an existing `.pvm` from the library |
-| `move` / `convert` | `--dst` |
-| `archive` / `unarchive` | shrink a VM bundle on disk |
-| `protection-set` / `protection-remove` | expiration-date protection |
-| `encrypt` / `decrypt` / `change-passwd` | needs interactive password |
-| `installtools` | Parallels Tools into guest |
-| `capture` | `--file` screenshot → image tool candidate |
-| `exec` | run a command in the guest; `-u/--user`, `--password` |
-| `enter` | interactive shell — **not MCP-viable**, needs a TTY |
-| `send-key-event` | synthetic keystrokes |
-| `problem-report`, `guest-debugger`, `debug-dump` | diagnostics |
+| Action                                           | Notes                                                                     |
+|--------------------------------------------------|---------------------------------------------------------------------------|
+| `list`                                           | `-a` all, `-i` info, `-j` json, `-o` fields, `-t` templates, `-S` stopped |
+| `status`                                         | single VM state                                                           |
+| `create`                                         | `--ostype`, `--distribution`, `--ostemplate`, `--dst`, `--no-hdd`         |
+| `clone`                                          | `--name`, `--linked`, `--template`, `--dst`, `--regenerate-src-uuid`      |
+| `delete`                                         | **destructive, irreversible**                                             |
+| `register` / `unregister`                        | add/remove an existing `.pvm` from the library                            |
+| `move` / `convert`                               | `--dst`                                                                   |
+| `archive` / `unarchive`                          | shrink a VM bundle on disk                                                |
+| `protection-set` / `protection-remove`           | expiration-date protection                                                |
+| `encrypt` / `decrypt` / `change-passwd`          | needs interactive password                                                |
+| `installtools`                                   | Parallels Tools into guest                                                |
+| `capture`                                        | `--file` screenshot → image tool candidate                                |
+| `exec`                                           | run a command in the guest; `-u/--user`, `--password`                     |
+| `enter`                                          | interactive shell — **not MCP-viable**, needs a TTY                       |
+| `send-key-event`                                 | synthetic keystrokes                                                      |
+| `problem-report`, `guest-debugger`, `debug-dump` | diagnostics                                                               |
 
 ### prlctl — power
 
@@ -62,11 +62,11 @@ Quirks to handle:
 
 ### prlctl — snapshots
 
-| Action | Options |
-|---|---|
-| `snapshot` | `-n/--name`, `-d/--description` |
-| `snapshot-list` | `-t` tree, `-i` id, `-j` json |
-| `snapshot-switch` | `-i` id, `--skip-resume` |
+| Action            | Options                                  |
+|-------------------|------------------------------------------|
+| `snapshot`        | `-n/--name`, `-d/--description`          |
+| `snapshot-list`   | `-t` tree, `-i` id, `-j` json            |
+| `snapshot-switch` | `-i` id, `--skip-resume`                 |
 | `snapshot-delete` | `-i` id, `-c` children — **destructive** |
 
 ### prlctl set — configuration categories
@@ -154,13 +154,13 @@ argv as `[prlctl, exec, <uuid>, *flags, *command]`.
 
 ### `--current-user` is mandatory for this use case
 
-| | default (no flag) | `--current-user` |
-|---|---|---|
-| Identity | `nt authority\system` | `DOMAIN\username` |
-| Windows session | **0** (services, no desktop) | **1** (interactive console) |
-| `%USERPROFILE%` | `C:\WINDOWS\system32\config\systemprofile` | `C:\Users\username` |
-| `Z:` → `\\Mac\Home` | **missing** | **present** |
-| Headed browsers | cannot render — no desktop | works |
+|                     | default (no flag)                          | `--current-user`            |
+|---------------------|--------------------------------------------|-----------------------------|
+| Identity            | `nt authority\system`                      | `DOMAIN\username`           |
+| Windows session     | **0** (services, no desktop)               | **1** (interactive console) |
+| `%USERPROFILE%`     | `C:\WINDOWS\system32\config\systemprofile` | `C:\Users\username`         |
+| `Z:` → `\\Mac\Home` | **missing**                                | **present**                 |
+| Headed browsers     | cannot render — no desktop                 | works                       |
 
 Why it matters for Playwright:
 
@@ -180,13 +180,13 @@ handling credentials — avoided entirely by using `--current-user`.
 
 ### Verified behaviour
 
-| Property | Result |
-|---|---|
-| Exit codes | propagate exactly (tested 0, 1, 3, 7) |
-| stdout / stderr | cleanly separated, not merged |
-| Guest readiness after `start` | `exec` answered within 5s |
-| PowerShell | available at `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe` |
-| Trailing whitespace | `cmd /c echo` appends a space before the newline — strip it |
+| Property                      | Result                                                                   |
+|-------------------------------|--------------------------------------------------------------------------|
+| Exit codes                    | propagate exactly (tested 0, 1, 3, 7)                                    |
+| stdout / stderr               | cleanly separated, not merged                                            |
+| Guest readiness after `start` | `exec` answered within 5s                                                |
+| PowerShell                    | available at `C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe` |
+| Trailing whitespace           | `cmd /c echo` appends a space before the newline — strip it              |
 
 Exit-code fidelity is what makes a Playwright wrapper viable at all: a failing suite
 returns non-zero and the server can report failure honestly.

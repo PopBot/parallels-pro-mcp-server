@@ -326,6 +326,8 @@ uv run coverage run --source=parallels_mcp -m unittest discover -s tests
 uv run coverage report -m
 ```
 
+For instructions on semantic versioning, GitHub Releases, and PyPI distribution, see the [Releasing & Publishing Guide](docs/RELEASING.md).
+
 ---
 
 ## License
