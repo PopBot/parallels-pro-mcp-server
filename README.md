@@ -24,32 +24,32 @@ A Model Context Protocol (MCP) server for Parallels Desktop on macOS. It enables
 
 ## Tool Reference
 
-| Tool | Purpose | Confirmation Required | Annotations |
-|---|---|---|---|
-| `vm_list` | Discover registered VMs and power states | No | Read-Only |
-| `vm_status` | Inspect detailed VM status, OS, tools version, and uptime | No | Read-Only |
-| `vm_start` | Start a VM by name or UUID | No | Power Change |
-| `vm_stop` | Request graceful ACPI shutdown (never force-kills) | No | Destructive |
-| `vm_suspend` | Suspend VM and preserve guest memory | No | Destructive |
-| `vm_wait_ready` | Poll until the guest OS answers execution probes | No | Readiness |
-| `vm_exec` | Run an argv vector in the guest (supports custom `user`) | No (Privileged) | Guest Command |
-| `vm_copy_to_guest` | Stream files or directories from host into guest filesystem | No | File Transfer |
-| `vm_copy_from_guest` | Stream files or directories from guest onto host filesystem | No | File Transfer |
-| `vm_share_folder` | Mount a host directory into the guest (`rw` or `ro`) | No | State Mutating |
-| `vm_unshare_folder` | Remove a previously shared host directory | No | State Mutating |
-| `vm_clone` | Clone a VM (fast linked clone or deep copy) | No | State Mutating |
-| `vm_delete` | Permanently delete a VM and its disks | `confirm: true` | Destructive |
-| `vm_set_headless` | Configure headless vs GUI window startup mode | No | State Mutating |
-| `vm_set_network_condition` | Simulate degraded network profiles (3g, wifi, loss, off) | No | State Mutating |
-| `vm_screenshot` | Capture current VM screen to host PNG | No | Read-Only |
-| `vm_send_keys` | Send synthetic keystrokes or chords (e.g. `ctrl+alt+del`, `win+r`) | No | Guest Command |
-| `vm_optimize_windows` | Add Windows Defender exclusions and set PowerShell ExecutionPolicy Bypass | No | State Mutating |
-| `vm_doctor` | Pre-flight environment diagnostics for macOS host and guest OS | No | Read-Only |
-| `vm_changelog` | Read release notes and updates over MCP | No | Read-Only |
-| `snapshot_list` | List all snapshots for a VM | No | Read-Only |
-| `snapshot_create` | Create a snapshot with name and optional description | `confirm: true` | State Mutating |
-| `snapshot_revert` | Revert VM state to a specified snapshot | `confirm: true` | State Mutating |
-| `snapshot_delete` | Permanently delete a snapshot to reclaim host disk space | `confirm: true` | State Mutating |
+| Tool                       | Purpose                                                                   | Confirmation Required | Annotations    |
+|----------------------------|---------------------------------------------------------------------------|-----------------------|----------------|
+| `vm_list`                  | Discover registered VMs and power states                                  | No                    | Read-Only      |
+| `vm_status`                | Inspect detailed VM status, OS, tools version, and uptime                 | No                    | Read-Only      |
+| `vm_start`                 | Start a VM by name or UUID                                                | No                    | Power Change   |
+| `vm_stop`                  | Request graceful ACPI shutdown (never force-kills)                        | No                    | Destructive    |
+| `vm_suspend`               | Suspend VM and preserve guest memory                                      | No                    | Destructive    |
+| `vm_wait_ready`            | Poll until the guest OS answers execution probes                          | No                    | Readiness      |
+| `vm_exec`                  | Run an argv vector in the guest (supports custom `user`)                  | No (Privileged)       | Guest Command  |
+| `vm_copy_to_guest`         | Stream files or directories from host into guest filesystem               | No                    | File Transfer  |
+| `vm_copy_from_guest`       | Stream files or directories from guest onto host filesystem               | No                    | File Transfer  |
+| `vm_share_folder`          | Mount a host directory into the guest (`rw` or `ro`)                      | No                    | State Mutating |
+| `vm_unshare_folder`        | Remove a previously shared host directory                                 | No                    | State Mutating |
+| `vm_clone`                 | Clone a VM (fast linked clone or deep copy)                               | No                    | State Mutating |
+| `vm_delete`                | Permanently delete a VM and its disks                                     | `confirm: true`       | Destructive    |
+| `vm_set_headless`          | Configure headless vs GUI window startup mode                             | No                    | State Mutating |
+| `vm_set_network_condition` | Simulate degraded network profiles (3g, wifi, loss, off)                  | No                    | State Mutating |
+| `vm_screenshot`            | Capture current VM screen to host PNG                                     | No                    | Read-Only      |
+| `vm_send_keys`             | Send synthetic keystrokes or chords (e.g. `ctrl+alt+del`, `win+r`)        | No                    | Guest Command  |
+| `vm_optimize_windows`      | Add Windows Defender exclusions and set PowerShell ExecutionPolicy Bypass | No                    | State Mutating |
+| `vm_doctor`                | Pre-flight environment diagnostics for macOS host and guest OS            | No                    | Read-Only      |
+| `vm_changelog`             | Read release notes and updates over MCP                                   | No                    | Read-Only      |
+| `snapshot_list`            | List all snapshots for a VM                                               | No                    | Read-Only      |
+| `snapshot_create`          | Create a snapshot with name and optional description                      | `confirm: true`       | State Mutating |
+| `snapshot_revert`          | Revert VM state to a specified snapshot                                   | `confirm: true`       | State Mutating |
+| `snapshot_delete`          | Permanently delete a snapshot to reclaim host disk space                  | `confirm: true`       | State Mutating |
 
 ---
 
@@ -305,9 +305,9 @@ Or using `uvx`:
 
 ## Environment Variables
 
-| Variable | Description | Default |
-|---|---|---|
-| `PARALLELS_DEFAULT_VM` | Fallback VM name or UUID used when a tool argument is omitted | None |
+| Variable                 | Description                                                        | Default                             |
+|--------------------------|--------------------------------------------------------------------|-------------------------------------|
+| `PARALLELS_DEFAULT_VM`   | Fallback VM name or UUID used when a tool argument is omitted      | None                                |
 | `PARALLELS_ARTIFACT_DIR` | Host directory where captured screenshots and artifacts are stored | `~/.cache/parallels-pro-mcp-server` |
 
 ---
@@ -358,3 +358,7 @@ For instructions on semantic versioning, GitHub Releases, and PyPI distribution,
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+---
+
+Built with ♥️ as a collaboration between human and AI.
