@@ -1,5 +1,9 @@
 # Parallels Pro MCP Server
 
+[![CI](https://github.com/PopBot/parallels-pro-mcp-server/actions/workflows/ci.yml/badge.svg)](https://github.com/PopBot/parallels-pro-mcp-server/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python >=3.10](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
+
 A Model Context Protocol (MCP) server for Parallels Desktop on macOS. It enables LLM agents—such as Claude Desktop, ChatGPT Codex, Cursor, and Antigravity—to discover, control, automate, and inspect Parallels virtual machines over standard MCP stdio.
 
 ## Highlights
