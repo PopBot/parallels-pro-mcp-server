@@ -6,6 +6,8 @@
 
 A Model Context Protocol (MCP) server for Parallels Desktop on macOS. It enables LLM agents—such as Claude Desktop, ChatGPT Codex, Cursor, and Antigravity—to discover, control, automate, and inspect Parallels virtual machines over standard MCP stdio.
 
+[![Parallels Pro MCP Server MCP server – quality and maintenance score on Glama](https://glama.ai/mcp/servers/PopBot/parallels-pro-mcp-server/badges/card.svg)](https://glama.ai/mcp/servers/PopBot/parallels-pro-mcp-server)
+
 ## Highlights
 
 - **Full Lifecycle Management**: Start, gracefully stop (ACPI), and suspend virtual machines.
