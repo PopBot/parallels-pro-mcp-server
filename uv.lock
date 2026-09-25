@@ -505,7 +505,6 @@ wheels = [
 
 [[package]]
 name = "parallels-pro-mcp-server"
-version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "mcp" },

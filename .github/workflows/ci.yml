@@ -37,6 +37,20 @@ jobs:
           uv run --python ${{ matrix.python-version }} coverage run --source=parallels_mcp -m unittest discover -s tests
           uv run --python ${{ matrix.python-version }} coverage report -m
 
+      - name: Report coverage summary
+        run: |
+          echo "### 📊 Test Coverage Report (Python ${{ matrix.python-version }} on ${{ matrix.os }})" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          uv run --python ${{ matrix.python-version }} coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
+          uv run --python ${{ matrix.python-version }} coverage xml -o coverage.xml
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: coverage.xml
+          retention-days: 14
+
       - name: Verify compilation
         run: uv run --python ${{ matrix.python-version }} python -m compileall -q parallels_mcp main.py
 
